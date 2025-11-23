@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Button } from '@/components/ui'
-import { Eye, EyeOff } from 'lucide-vue-next'
-import ResumeInputs from './components/ResumeInputs.vue'
-import ResumePreview from './components/ResumePreview.vue'
+import ResumeBuilderTabs from './ResumeBuilderTabs.vue'
+import ManualResumeBuilder from './manualResumeBuilder/index.vue'
+import TemplateResumeBuilder from './templateResumeBuilder/index.vue'
+import AiAssistedResumeBuilder from './aiAssistedResumeBuilder/index.vue'
 import type { PersonalInfo, Experience, Education } from '@/interfaces/resume'
 
 const showInputs = ref(true)
@@ -89,38 +89,12 @@ const removeSkill = (index: number) => {
 <template>
   <div class="min-h-[calc(100vh-3.5rem)] bg-background">
     <div class="container mx-auto py-6 px-4">
-      <div 
-        :class="[
-          'flex items-center justify-between',
-          showInputs ? 'mb-6' : 'mb-12'
-        ]"
-      >
-        <h1 class="text-3xl font-bold">Build Your Resume</h1>
-        
-        <Button 
-          @click="toggleInputs" 
-          variant="outline"
-          size="sm"
-          class="gap-2"
-        >
-          <Eye v-if="!showInputs" class="w-4 h-4" />
-          <EyeOff v-else class="w-4 h-4" />
-          {{ showInputs ? 'Hide Inputs' : 'Show Inputs' }}
-        </Button>
-      </div>
-      
-      <div 
-        :class="[
-          'grid gap-8',
-          showInputs ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'
-        ]"
-      >
-        <div 
-          v-show="showInputs"
-          class="order-2 lg:order-1"
-        >
-          <ResumeInputs 
+      <ResumeBuilderTabs>
+        <template #manual>
+          <ManualResumeBuilder
             :resume-data="resumeData"
+            :show-inputs="showInputs"
+            :toggle-inputs="toggleInputs"
             :update-personal-info="updatePersonalInfo"
             :add-experience="addExperience"
             :update-experience="updateExperience"
@@ -132,22 +106,16 @@ const removeSkill = (index: number) => {
             :update-skill="updateSkill"
             :remove-skill="removeSkill"
           />
-        </div>
+        </template>
         
-        <div 
-          :class="[
-            'order-1 lg:order-2',
-            !showInputs ? 'mx-auto w-full' : ''
-          ]"
-        >
-          <div class="sticky top-20">
-            <ResumePreview 
-              :resume-data="resumeData" 
-              :is-full-screen="!showInputs"
-            />
-          </div>
-        </div>
-      </div>
+        <template #template>
+          <TemplateResumeBuilder />
+        </template>
+        
+        <template #ai>
+          <AiAssistedResumeBuilder />
+        </template>
+      </ResumeBuilderTabs>
     </div>
   </div>
 </template>

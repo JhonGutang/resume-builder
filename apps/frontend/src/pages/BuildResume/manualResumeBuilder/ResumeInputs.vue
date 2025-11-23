@@ -50,7 +50,7 @@ const dateValueToString = (date: DateValue | null | undefined): string => {
 
 <template>
   <div class="space-y-8">
-    <div class="bg-card rounded-lg p-6 shadow-gray-500 shadow-md border">
+    <div class="bg-card rounded-lg p-6 shadow-sm border">
       <h2 class="text-2xl font-semibold mb-4">Personal Information</h2>
       
       <div class="space-y-4">
@@ -78,7 +78,7 @@ const dateValueToString = (date: DateValue | null | undefined): string => {
       </div>
     </div>
 
-    <div class="bg-card rounded-lg p-6 shadow-gray-500 shadow-md border">
+    <div class="bg-card rounded-lg p-6 shadow-sm border">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-semibold">Experience</h2>
         <Button @click="addExperience" size="sm">
@@ -163,7 +163,7 @@ const dateValueToString = (date: DateValue | null | undefined): string => {
       </div>
     </div>
 
-    <div class="bg-card rounded-lg p-6 shadow-gray-500 shadow-md border">
+    <div class="bg-card rounded-lg p-6 shadow-sm border">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-semibold">Education</h2>
         <Button @click="addEducation" size="sm">
@@ -216,7 +216,7 @@ const dateValueToString = (date: DateValue | null | undefined): string => {
       </div>
     </div>
 
-    <div class="bg-card rounded-lg p-6 shadow-gray-500 shadow-md border">
+    <div class="bg-card rounded-lg p-6 shadow-sm border">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-semibold">Skills</h2>
         <Button @click="addSkill" size="sm">
@@ -257,3 +257,4 @@ const dateValueToString = (date: DateValue | null | undefined): string => {
     </div>
   </div>
 </template>
+
