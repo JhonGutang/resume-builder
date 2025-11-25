@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ResumeBuilderTabs from './ResumeBuilderTabs.vue'
 import ManualResumeBuilder from './manualResumeBuilder/index.vue'
 import TemplateResumeBuilder from './templateResumeBuilder/index.vue'
@@ -11,6 +11,7 @@ const showInputs = ref(true)
 const isSaving = ref(false)
 const saveStatus = ref<{ type: 'success' | 'error', message: string } | null>(null)
 const savedResumeId = ref<string | null>(null)
+const isLoading = ref(false)
 
 const toggleInputs = () => {
   showInputs.value = !showInputs.value
@@ -27,6 +28,43 @@ const resumeData = ref({
   experience: [] as Experience[],
   education: [] as Education[],
   skills: [] as string[],
+})
+
+// Load existing resume on mount
+onMounted(async () => {
+  try {
+    isLoading.value = true
+    // Using the default userId from getUserResume procedure
+    const result = await trpcClient.getUserResume.query({
+      userId: 'user-1764079323860'
+    })
+    
+    if (result.success && result.resume) {
+      // Populate resumeData with fetched data
+      if (result.resume.personalInfo) {
+        resumeData.value.personalInfo = result.resume.personalInfo
+      }
+      if (result.resume.experience) {
+        resumeData.value.experience = result.resume.experience
+      }
+      if (result.resume.education) {
+        resumeData.value.education = result.resume.education
+      }
+      if (result.resume.skills) {
+        resumeData.value.skills = result.resume.skills
+      }
+      
+      // Store the resume ID if available
+      if (result.resume._id) {
+        savedResumeId.value = result.resume._id.toString()
+      }
+    }
+  } catch (error) {
+    console.error('Error loading resume:', error)
+    // Don't show error to user, just start with empty form
+  } finally {
+    isLoading.value = false
+  }
 })
 
 // Personal Info Updates
@@ -137,7 +175,10 @@ const saveResume = async () => {
 <template>
   <div class="min-h-[calc(100vh-3.5rem)] bg-background">
     <div class="container mx-auto py-6 px-4">
-      <ResumeBuilderTabs>
+      <div v-if="isLoading" class="flex items-center justify-center py-12">
+        <div class="text-muted-foreground">Loading resume...</div>
+      </div>
+      <ResumeBuilderTabs v-else>
         <template #manual>
           <ManualResumeBuilder
             :resume-data="resumeData"
@@ -171,4 +212,3 @@ const saveResume = async () => {
     </div>
   </div>
 </template>
-
