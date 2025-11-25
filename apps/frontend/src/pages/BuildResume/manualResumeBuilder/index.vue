@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui'
-import { Eye, EyeOff, Save, CheckCircle2, XCircle } from 'lucide-vue-next'
+import { Eye, EyeOff, Save, CheckCircle2, XCircle, Download } from 'lucide-vue-next'
 import ResumeInputs from './ResumeInputs.vue'
 import ResumePreview from './ResumePreview.vue'
 import type { ResumeData } from '@/interfaces/resume'
@@ -23,6 +23,8 @@ interface Props {
   isSaving: boolean
   saveStatus: { type: 'success' | 'error', message: string } | null
   savedResumeId: string | null
+  exportResume: () => Promise<void>
+  isExporting: boolean
 }
 
 defineProps<Props>()
@@ -48,6 +50,17 @@ defineProps<Props>()
           >
             <Save class="w-4 h-4" />
             {{ isSaving ? 'Saving...' : 'Save Resume' }}
+          </Button>
+
+          <Button 
+            @click="exportResume" 
+            :disabled="isExporting"
+            variant="secondary"
+            size="sm"
+            class="gap-2"
+          >
+            <Download class="w-4 h-4" />
+            {{ isExporting ? 'Exporting...' : 'Export PDF' }}
           </Button>
           
           <Button 

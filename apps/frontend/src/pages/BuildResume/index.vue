@@ -6,12 +6,20 @@ import TemplateResumeBuilder from './templateResumeBuilder/index.vue'
 import AiAssistedResumeBuilder from './aiAssistedResumeBuilder/index.vue'
 import type { PersonalInfo, Experience, Education } from '@/interfaces/resume'
 import { trpcClient } from '@/lib/trpcClient'
+import { 
+  collectPageStyles, 
+  createHtmlDocument, 
+  downloadPdfFromBase64, 
+  getResumePreviewHtml,
+  pdfExportConfig 
+} from '@/config/pdfExport'
 
 const showInputs = ref(true)
 const isSaving = ref(false)
 const saveStatus = ref<{ type: 'success' | 'error', message: string } | null>(null)
 const savedResumeId = ref<string | null>(null)
 const isLoading = ref(false)
+const isExporting = ref(false)
 
 const toggleInputs = () => {
   showInputs.value = !showInputs.value
@@ -30,17 +38,14 @@ const resumeData = ref({
   skills: [] as string[],
 })
 
-// Load existing resume on mount
 onMounted(async () => {
   try {
     isLoading.value = true
-    // Using the default userId from getUserResume procedure
     const result = await trpcClient.getUserResume.query({
       userId: 'user-1764079323860'
     })
     
     if (result.success && result.resume) {
-      // Populate resumeData with fetched data
       if (result.resume.personalInfo) {
         resumeData.value.personalInfo = result.resume.personalInfo
       }
@@ -54,25 +59,21 @@ onMounted(async () => {
         resumeData.value.skills = result.resume.skills
       }
       
-      // Store the resume ID if available
       if (result.resume._id) {
         savedResumeId.value = result.resume._id.toString()
       }
     }
   } catch (error) {
     console.error('Error loading resume:', error)
-    // Don't show error to user, just start with empty form
   } finally {
     isLoading.value = false
   }
 })
 
-// Personal Info Updates
 const updatePersonalInfo = (field: keyof PersonalInfo, value: string) => {
   resumeData.value.personalInfo[field] = value
 }
 
-// Experience Updates
 const addExperience = () => {
   resumeData.value.experience.push({
     title: '',
@@ -93,7 +94,6 @@ const removeExperience = (index: number) => {
   resumeData.value.experience.splice(index, 1)
 }
 
-// Education Updates
 const addEducation = () => {
   resumeData.value.education.push({
     degree: '',
@@ -112,7 +112,6 @@ const removeEducation = (index: number) => {
   resumeData.value.education.splice(index, 1)
 }
 
-// Skills Updates
 const addSkill = () => {
   resumeData.value.skills.push('')
 }
@@ -127,13 +126,11 @@ const removeSkill = (index: number) => {
   resumeData.value.skills.splice(index, 1)
 }
 
-// Save Resume
 const saveResume = async () => {
   try {
     isSaving.value = true
     saveStatus.value = null
     
-    // For now, using a placeholder userId. In production, this would come from authentication
     const userId = 'user-' + Date.now()
     
     const result = await trpcClient.createUserResume.mutate({
@@ -150,7 +147,6 @@ const saveResume = async () => {
         message: result.message || 'Resume saved successfully!'
       }
       
-      // Clear success message after 5 seconds
       setTimeout(() => {
         saveStatus.value = null
       }, 5000)
@@ -162,12 +158,52 @@ const saveResume = async () => {
       message: error instanceof Error ? error.message : 'Failed to save resume. Please try again.'
     }
     
-    // Clear error message after 5 seconds
     setTimeout(() => {
       saveStatus.value = null
     }, 5000)
   } finally {
     isSaving.value = false
+  }
+}
+
+const exportResume = async () => {
+  try {
+    isExporting.value = true
+    
+    const htmlContent = getResumePreviewHtml(pdfExportConfig.previewSelector)
+    
+    const styles = pdfExportConfig.includePageStyles ? collectPageStyles() : ''
+    
+    const html = createHtmlDocument(htmlContent, styles)
+    
+    const result = await trpcClient.exportResumePDF.mutate({ html })
+    
+    if (result.success && result.pdf) {
+      downloadPdfFromBase64(result.pdf, result.fileName || pdfExportConfig.defaultFileName)
+      
+      saveStatus.value = {
+        type: 'success',
+        message: 'Resume exported successfully!'
+      }
+      
+      setTimeout(() => {
+        saveStatus.value = null
+      }, 5000)
+    } else {
+      throw new Error(result.message || 'Failed to export PDF')
+    }
+  } catch (error) {
+    console.error('Error exporting resume:', error)
+    saveStatus.value = {
+      type: 'error',
+      message: error instanceof Error ? error.message : 'Failed to export resume. Please try again.'
+    }
+    
+    setTimeout(() => {
+      saveStatus.value = null
+    }, 5000)
+  } finally {
+    isExporting.value = false
   }
 }
 </script>
@@ -198,6 +234,8 @@ const saveResume = async () => {
             :is-saving="isSaving"
             :save-status="saveStatus"
             :saved-resume-id="savedResumeId"
+            :export-resume="exportResume"
+            :is-exporting="isExporting"
           />
         </template>
         

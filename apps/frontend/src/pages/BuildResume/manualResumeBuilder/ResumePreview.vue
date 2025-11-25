@@ -21,6 +21,7 @@ const formatDate = (dateString: string) => {
 
 <template>
   <div 
+    class="resume-preview"
     :class="[
       'bg-white rounded-lg shadow-lg border p-8 md:p-12 w-full mx-auto overflow-hidden transition-all duration-300',
       isFullScreen ? 'max-w-[1200px] scale-110' : 'max-w-[816px]'
