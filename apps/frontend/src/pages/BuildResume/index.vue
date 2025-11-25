@@ -5,8 +5,12 @@ import ManualResumeBuilder from './manualResumeBuilder/index.vue'
 import TemplateResumeBuilder from './templateResumeBuilder/index.vue'
 import AiAssistedResumeBuilder from './aiAssistedResumeBuilder/index.vue'
 import type { PersonalInfo, Experience, Education } from '@/interfaces/resume'
+import { trpcClient } from '@/lib/trpcClient'
 
 const showInputs = ref(true)
+const isSaving = ref(false)
+const saveStatus = ref<{ type: 'success' | 'error', message: string } | null>(null)
+const savedResumeId = ref<string | null>(null)
 
 const toggleInputs = () => {
   showInputs.value = !showInputs.value
@@ -84,6 +88,50 @@ const updateSkill = (index: number, value: string) => {
 const removeSkill = (index: number) => {
   resumeData.value.skills.splice(index, 1)
 }
+
+// Save Resume
+const saveResume = async () => {
+  try {
+    isSaving.value = true
+    saveStatus.value = null
+    
+    // For now, using a placeholder userId. In production, this would come from authentication
+    const userId = 'user-' + Date.now()
+    
+    const result = await trpcClient.createUserResume.mutate({
+      userId,
+      personalInfo: resumeData.value.personalInfo,
+      experience: resumeData.value.experience,
+      education: resumeData.value.education,
+    })
+    
+    if (result.success) {
+      savedResumeId.value = result.resumeId
+      saveStatus.value = {
+        type: 'success',
+        message: result.message || 'Resume saved successfully!'
+      }
+      
+      // Clear success message after 5 seconds
+      setTimeout(() => {
+        saveStatus.value = null
+      }, 5000)
+    }
+  } catch (error) {
+    console.error('Error saving resume:', error)
+    saveStatus.value = {
+      type: 'error',
+      message: error instanceof Error ? error.message : 'Failed to save resume. Please try again.'
+    }
+    
+    // Clear error message after 5 seconds
+    setTimeout(() => {
+      saveStatus.value = null
+    }, 5000)
+  } finally {
+    isSaving.value = false
+  }
+}
 </script>
 
 <template>
@@ -105,6 +153,10 @@ const removeSkill = (index: number) => {
             :add-skill="addSkill"
             :update-skill="updateSkill"
             :remove-skill="removeSkill"
+            :save-resume="saveResume"
+            :is-saving="isSaving"
+            :save-status="saveStatus"
+            :saved-resume-id="savedResumeId"
           />
         </template>
         

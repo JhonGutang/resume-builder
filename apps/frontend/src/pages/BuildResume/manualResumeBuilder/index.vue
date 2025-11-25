@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Button } from '@/components/ui'
-import { Eye, EyeOff } from 'lucide-vue-next'
+import { Eye, EyeOff, Save, CheckCircle2, XCircle } from 'lucide-vue-next'
 import ResumeInputs from './ResumeInputs.vue'
 import ResumePreview from './ResumePreview.vue'
 import type { ResumeData } from '@/interfaces/resume'
@@ -19,6 +19,10 @@ interface Props {
   addSkill: () => void
   updateSkill: (index: number, value: string) => void
   removeSkill: (index: number) => void
+  saveResume: () => Promise<void>
+  isSaving: boolean
+  saveStatus: { type: 'success' | 'error', message: string } | null
+  savedResumeId: string | null
 }
 
 defineProps<Props>()
@@ -28,22 +32,54 @@ defineProps<Props>()
   <div>
     <div 
       :class="[
-        'flex items-center justify-between',
+        'flex flex-col gap-4',
         showInputs ? 'mb-6' : 'mb-12'
       ]"
     >
-      <h1 class="text-3xl font-bold">Build Your Resume</h1>
+      <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-bold">Build Your Resume</h1>
+        
+        <div class="flex items-center gap-2">
+          <Button 
+            @click="saveResume" 
+            :disabled="isSaving"
+            size="sm"
+            class="gap-2"
+          >
+            <Save class="w-4 h-4" />
+            {{ isSaving ? 'Saving...' : 'Save Resume' }}
+          </Button>
+          
+          <Button 
+            @click="toggleInputs" 
+            variant="outline"
+            size="sm"
+            class="gap-2"
+          >
+            <Eye v-if="!showInputs" class="w-4 h-4" />
+            <EyeOff v-else class="w-4 h-4" />
+            {{ showInputs ? 'Hide Inputs' : 'Show Inputs' }}
+          </Button>
+        </div>
+      </div>
       
-      <Button 
-        @click="toggleInputs" 
-        variant="outline"
-        size="sm"
-        class="gap-2"
+      <!-- Status Messages -->
+      <div 
+        v-if="saveStatus"
+        :class="[
+          'flex items-center gap-2 p-3 rounded-md text-sm font-medium',
+          saveStatus.type === 'success' 
+            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' 
+            : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+        ]"
       >
-        <Eye v-if="!showInputs" class="w-4 h-4" />
-        <EyeOff v-else class="w-4 h-4" />
-        {{ showInputs ? 'Hide Inputs' : 'Show Inputs' }}
-      </Button>
+        <CheckCircle2 v-if="saveStatus.type === 'success'" class="w-4 h-4" />
+        <XCircle v-else class="w-4 h-4" />
+        <span>{{ saveStatus.message }}</span>
+        <span v-if="saveStatus.type === 'success' && savedResumeId" class="text-xs opacity-75">
+          (ID: {{ savedResumeId }})
+        </span>
+      </div>
     </div>
     
     <div 
